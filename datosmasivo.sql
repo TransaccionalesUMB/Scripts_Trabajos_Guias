@@ -94,8 +94,6 @@ DELIMITER //
 
 CREATE PROCEDURE InsertarDatosMasivosDetalle()
 BEGIN
-    DECLARE i INT DEFAULT 1;
-    DECLARE j INT DEFAULT 1;
     DECLARE k INT DEFAULT 1;
     DECLARE CodProducto INT;
     DECLARE NumFactura INT;
