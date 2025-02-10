@@ -94,56 +94,45 @@ DELIMITER //
 
 CREATE PROCEDURE InsertarDatosMasivosDetalle()
 BEGIN
-    DECLARE i INT DEFAULT 0;
-    DECLARE j INT DEFAULT 0;
-	DECLARE k INT DEFAULT 0;
-    DECLARE CodProducto INT default 1;
-    DECLARE NumFactura INT default 1;
-	DECLARE Item INT default 1;
+    DECLARE i INT DEFAULT 1;
+    DECLARE j INT DEFAULT 1;
+    DECLARE k INT DEFAULT 1;
+    DECLARE CodProducto INT;
+    DECLARE NumFactura INT;
     DECLARE Cantidad INT;
+    
     -- Iniciar transacción
     START TRANSACTION;
-    WHILE i <= 10 DO
-    set NumFactura = NumFactura + 1;
-		-- Seleccionar un Número de Factura aleatorio
-        SELECT Numero INTO NumFactura FROM Factura where Numero = NumFactura ORDER BY RAND() LIMIT 1;
-        
-		WHILE j <= 50 DO
-		SET CodProducto = CodProducto + 1;
-			-- Seleccionar un Código de Producto aleatorio
-			SELECT Codigo INTO CodProducto FROM Producto where Codigo = CodProducto IS NOT NULL ORDER BY RAND() LIMIT 1;
-        
-			WHILE k <= 1000000 DO
-			SET Item = Item + 1;
-				-- Generar una cantidad aleatoria entre 1 y 100
-				SET Cantidad = FLOOR(RAND() * 100) + 1;
-				-- Insertar en la tabla Detalle
-				INSERT INTO Detalle (CodProducto, NumFactura, Item, Cantidad) 
-				VALUES (CodProducto, NumFactura, Item, Cantidad);
-			-- Incrementar el contador solo si se inserta un registro válido
-			SET K = k + 1; 
-			END WHILE;
-		SET j = j + 1;
-		END WHILE;
-	SET i = i + 1;
-	END WHILE;
--- Eliminación de registros nulos
-    DELETE FROM Detalle
-	WHERE CodProducto IS NULL
-	OR NumFactura IS NULL
-	OR Item IS NULL;
--- Confirmar la transacción
+
+    WHILE k <= 1000000 DO
+        -- Seleccionar aleatoriamente una factura existente
+        SELECT Numero INTO NumFactura FROM Factura ORDER BY RAND() LIMIT 1;
+
+        -- Seleccionar aleatoriamente un producto existente
+        SELECT Codigo INTO CodProducto FROM Producto ORDER BY RAND() LIMIT 1;
+
+        -- Generar una cantidad aleatoria entre 1 y 100
+        SET Cantidad = FLOOR(RAND() * 100) + 1;
+
+        -- Insertar en la tabla Detalle
+        INSERT INTO Detalle (CodProducto, NumFactura, Item, Cantidad) 
+        VALUES (CodProducto, NumFactura, k, Cantidad);
+
+        -- Incrementar el contador
+        SET k = k + 1;
+    END WHILE;
+
+    -- Confirmar la transacción
     COMMIT;
--- Validación en caso que se genere algun error en el codigo
-    ROLLBACK;
 END //
 
 DELIMITER ;
+
 -- LLamado de 1'000.000 de datos
 CALL InsertarDatosMasivosDetalle();
 -- vista del contador de datos
 SELECT COUNT(*) FROM Detalle;
--- llamado de la tabla Detalle limitado a 10 registros
-SELECT * FROM Detalle LIMIT 10;
+-- llamado de la tabla Detalle limitado a 10 registros aleatorios
+SELECT * FROM Detalle ORDER BY RAND() LIMIT 10;
 -- Eliminacion del Procedure en caso que se necesite volver a ejecutar
 DROP PROCEDURE InsertarDatosMasivosDetalle;
