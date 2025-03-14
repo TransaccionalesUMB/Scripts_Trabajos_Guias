@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <title>Simulación de Cruce Semafórico Mejorado</title>
+    <style>
+        :root {
+            --verde: lightgreen;
+            --rojo: red;
+            --fondo-calle: #444;
+            --fondo-cruce: #222;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #ddd;
+            font-family: Arial, sans-serif;
+        }
+
+        #cruce {
+            position: relative;
+            width: 800px;
+            height: 800px;
+            background: var(--fondo-cruce);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+        }
+
+        .calle-horizontal, .calle-vertical {
+            position: absolute;
+            background: var(--fondo-calle);
+        }
+
+        .calle-horizontal {
+            width: 100%;
+            height: 120px;
+        }
+
+        .calle-vertical {
+            height: 100%;
+            width: 120px;
+        }
+
+        .semaforo {
+            display: flex;
+            flex-direction: column;
+            width: 50px;
+            height: 120px;
+            background: black;
+            border-radius: 15px;
+            position: absolute;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .luz {
+            width: 40px;
+            height: 40px;
+            margin: 5px auto;
+            border-radius: 50%;
+        }
+
+        #semaforoNS {
+            top: 210px;
+            left: 470px;
+        }
+
+        #semaforoEO {
+            bottom: 210px;
+            left: 280px;
+        }
+
+        .auto {
+            position: absolute;
+            border-radius: 10px;
+            transition: transform 0.1s linear;
+        }
+
+        #autoNS {
+            background: blue;
+            width: 50px;
+            height: 90px;
+        }
+
+        #autoEO {
+            background: red;
+            width: 90px;
+            height: 50px;
+        }
+
+        #btnPausar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            font-size: 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #555;
+            color: white;
+            transition: background 0.3s;
+        }
+
+        #btnPausar:hover {
+            background: #777;
+        }
+
+        #contador {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 50px;
+            color: black;
+            font-weight: bold;
+        }
+
+        #mensajeColision {
+            position: absolute;
+            top: 150px;
+            left: 200px;
+            font-size: 30px;
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <button id="btnPausar">Pausar/Continuar</button>
+    <div id="contador">10</div>
+    <div id="mensajeColision"></div>
+    <div id="cruce">
+        <div class="calle-horizontal"></div>
+        <div class="calle-vertical"></div>
+
+        <div id="semaforoNS" class="semaforo">
+            <div id="luzNSRojo" class="luz" style="background: var(--rojo);"></div>
+            <div id="luzNSVerde" class="luz" style="background: darkgreen;"></div>
+        </div>
+
+        <div id="semaforoEO" class="semaforo">
+            <div id="luzEORojo" class="luz" style="background: darkred;"></div>
+            <div id="luzEOVerde" class="luz" style="background: var(--verde);"></div>
+        </div>
+
+        <div id="autoNS" class="auto" style="top: 20px; left: 370px;"></div>
+        <div id="autoEO" class="auto" style="top: 370px; left: 20px;"></div>
+    </div>
+
+    <script>
+        let pausa = false;
+        let tiempoSemaforo = 15;
+        const contador = document.getElementById("contador");
+        const autoNS = document.getElementById("autoNS");
+        const autoEO = document.getElementById("autoEO");
+
+        document.getElementById("btnPausar").addEventListener("click", () => {
+            pausa = !pausa;
+        });
+
+        function detectarColision() {
+        const rectNS = autoNS.getBoundingClientRect();
+        const rectEO = autoEO.getBoundingClientRect();
+
+        return !(
+                rectNS.right < rectEO.left ||
+                rectNS.left > rectEO.right ||
+                rectNS.bottom < rectEO.top ||
+                rectNS.top > rectEO.bottom
+            );
+        }
+
+        function moverAutos() {
+            if (pausa) return;
+
+            const topNS = parseInt(autoNS.style.top);
+            const leftEO = parseInt(autoEO.style.left);
+
+            if (tiempoSemaforo > 0) {
+                tiempoSemaforo -= 0.05;
+                contador.innerText = Math.ceil(tiempoSemaforo);
+            } else {
+                cambiarSemaforos();
+                tiempoSemaforo = 15;
+            }
+
+            if (autoPuedeMoverse("NS") && !detectarColision() || topNS < 230 || topNS > 450) {
+                autoNS.style.top = `${(topNS + 15) % 750}px`;
+            }
+
+            if (autoPuedeMoverse("EO") && !detectarColision() || leftEO < 230 || leftEO > 450) {
+                autoEO.style.left = `${(leftEO + 15) % 800}px`;
+            }
+
+            if (detectarColision()) {
+                mensajeColision.textContent = "¡COLISIÓN DETECTADA!";
+                pausa = true;
+            }
+        }
+
+
+        function autoPuedeMoverse(direccion) {
+            if (direccion === "NS") {
+                return document.getElementById("luzNSVerde").style.background === "var(--verde)";
+            } else if (direccion === "EO") {
+                return document.getElementById("luzEOVerde").style.background === "var(--verde)";
+            }
+        }
+
+        function cambiarSemaforos() {
+            const nsRojo = document.getElementById("luzNSRojo");
+            const nsVerde = document.getElementById("luzNSVerde");
+            const eoRojo = document.getElementById("luzEORojo");
+            const eoVerde = document.getElementById("luzEOVerde");
+
+            if (nsVerde.style.background === "var(--verde)") {
+                nsVerde.style.background = "darkgreen";
+                nsRojo.style.background = "var(--rojo)";
+                eoVerde.style.background = "var(--verde)";
+                eoRojo.style.background = "darkred";
+            } else {
+                nsVerde.style.background = "var(--verde)";
+                nsRojo.style.background = "darkred";
+                eoVerde.style.background = "darkgreen";
+                eoRojo.style.background = "var(--rojo)";
+            }
+        }
+
+        const simulacion = setInterval(moverAutos, 30);
+    </script>
+</body>
+
+</html>
